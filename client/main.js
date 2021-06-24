@@ -1,6 +1,8 @@
 var socket = new ClientSocket()
 var store = new Entitystore()
 
+
+
 socket.specials.on('connected',() => {
     socket.emit('blob',{asd:'asd'})
     
@@ -8,17 +10,25 @@ socket.specials.on('connected',() => {
 
 socket.on('deltaupdate',(update) => {
     store.applyChanges(update)
-    ReactDOM.render(test(),document.querySelector('#root'))
+    updateHTML()
 })
 
 socket.on('fullupdate',(update) => {
     store.applyChanges(update)
-    ReactDOM.render(test(),document.querySelector('#root'))
+    updateHTML()
+})
+
+socket.on('error', (error) => {
+    toastr.error(error.data)
 })
 
 socket.socket.onAny((event,data) => {
     console.log(event,data)
 })
+
+function updateHTML(){
+    ReactDOM.render(Mainview(),document.querySelector('#root'))
+}
 
 socket.connect()
 

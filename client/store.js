@@ -131,7 +131,9 @@ class Entitystore{
     }
 
     descendants(ent){
-        return this.children(ent).flatMap(ent => this.descendants(ent))
+        var children = this.children(ent)
+        var grandchildren = children.flatMap(ent => this.descendants(ent))
+        return children.concat(grandchildren)
     }
 
     duplicate(ent,amount){
@@ -162,7 +164,7 @@ class Entitystore{
         return {
             upserts,
             deletions:[],
-            version:this.versionnumber,
+            versionnumber:this.versionnumber,
             type:'fullupdate',
         }
     }
@@ -194,19 +196,20 @@ class Entitystore{
         return {
             upserts,
             deletions,
-            version:this.versionnumber,
+            versionnumber:this.versionnumber,
             type:'deltaupdate'
         }
     }
 
     applyChanges({deletions,upserts,type,versionnumber}){
+        this.versionnumber = versionnumber
+
         if(type == 'fullupdate'){
-            var store = new Entitystore()
+            this.map.clear()
             for(var entity of upserts){
                 entity.__proto__ = Entity.prototype
-                store.inject(entity)
+                this.inject(entity)
             }
-            store.versionnumber = versionnumber
             return store
         }else{
             for(let upsert of upserts){
@@ -221,7 +224,6 @@ class Entitystore{
                     local.store = this
                 }
             }
-    
             for(let deletion of deletions){
                 this.remove(deletion)
             }

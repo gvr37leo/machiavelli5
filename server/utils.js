@@ -210,7 +210,7 @@ export function remove(arr, value) {
 }
 
 Array.prototype.remove = function (index) {
-    return this.splice(index,1)
+    return this.splice(index,1)[0]
 }
 
 Array.prototype.first = function () {

@@ -5,6 +5,7 @@ import {Server as IOServer} from 'socket.io'
 import {SocketServer} from './socketserver.js'
 import {Entity, EntityStore} from './store.js'
 import {GameManager} from './machiavellicontroller.js'
+import {Action,Card,DiscoverOption,Game,Player,Role} from './models.js'
 
 //issynced should be done per socket/tab
 //store should not be sent to client
@@ -21,6 +22,16 @@ var machiavellicontroller = new GameManager()
 machiavellicontroller.setupListeners()
 machiavellicontroller.input.addAndTrigger('init')
 
+machiavellicontroller.input.onProcessFinished.listen(() => {
+    updateClients()
+})
+
+machiavellicontroller.output.onany((data,type) => {
+    for(let socket of socketserver.sockets.list()){
+        socket.emit(type,data)
+    }
+})
+
 
 
 function updateClients(){
@@ -29,10 +40,8 @@ function updateClients(){
         let fulldb = machiavellicontroller.store.collectAll()
         for(let socket of socketserver.sockets.list()){
             if(socket.isSynced){
-                console.log('deltaupdate')
                 socket.emit('deltaupdate',changes)
             }else{
-                console.log('fullupdate')
                 socket.isSynced = true
                 socket.emit('fullupdate',fulldb)
             }
@@ -41,7 +50,15 @@ function updateClients(){
 }
 
 socketserver.listenup.onany((data,type) => {
-    console.log(type,data)
+    machiavellicontroller.input.addAndTrigger(type,data)
+})
+
+socketserver.listenup.on('requestfullupdate',(data) => {
+    let sockets = socketserver.sockets.list().filter(s => s.clientid == data.clientid)
+    let fulldb = machiavellicontroller.store.collectAll()
+    for(var socket of sockets){
+        socket.emit('fullupdate',fulldb)
+    }
 })
 
 socketserver.specials.onany((data,type) => {
@@ -49,10 +66,18 @@ socketserver.specials.onany((data,type) => {
 })
 
 socketserver.specials.on('clientconnected',({client}) => {
-    machiavellicontroller.store.add(new Entity({name:'player',clientid:client.id}) ,machiavellicontroller.store.getPlayerFolder())
+    var player = createPlayer()
+    player.clientid = client.id
     console.log('client connected', client.id)
     updateClients()
 })
+
+function createPlayer(){
+    var player = machiavellicontroller.store.add(new Player({name:'unknown'}) ,machiavellicontroller.store.getPlayerFolder())
+    machiavellicontroller.store.add(new Entity({name:'hand'}), player)
+    machiavellicontroller.store.add(new Entity({name:'board'}), player)
+    return player
+}
 
 socketserver.specials.on('clientdisconnected',({client}) => {
     console.log('client disconnected', client.id)

@@ -3,28 +3,18 @@ import {EventSystem} from './eventsystem.js'
 import {first} from '../utils.js'
 
 export class EventQueue{
-    idcounter = 0
+    idcounter = 1
     listeners
     events
     onProcessFinished = new EventSystem()
     onRuleBroken = new EventSystem()
     rules = []
-    discoveryidcounter = 0
+    discoveryidcounter = 1
 
     constructor(){
         this.listeners = []
         this.events = []
     }
-
-    // listenDiscovery(type:string,megacb:(data:any,cb:(cbdata:any) => void) => void){
-    //     this.listen(type,(dataAndCb:{data:any,cb:(ads:any) => void}) => {
-    //         megacb(dataAndCb.data,dataAndCb.cb)
-    //     })
-    // }
-
-    // startDiscovery(type:string,data: any, cb: (cbdata: any) => void) {
-    //     this.addAndTrigger(type,{data,cb})
-    // }
 
     listenDiscovery(type, cb) {
         this.listen(type,(discovery) => {
@@ -32,24 +22,17 @@ export class EventQueue{
         })
     }
 
-
-    
-    startDiscovery(type, data, cb) {
+    startDiscovery(cb) {
         let createdid = this.discoveryidcounter++
         
         let listenerid = this.listen('completediscovery',(discovery) => {
-            if(discovery.data.id == createdid){
+            if(discovery.id == createdid){
                 this.unlisten(listenerid)
-                cb(discovery.data.data)
+                cb(discovery.data)
             }
         })
-        this.addAndTrigger(type,{data,id: createdid})
+        return createdid
     }
-
-    completeDiscovery(data, id) {
-        this.addAndTrigger('completediscovery',{data,id})
-    }
-
 
     listen(type,cb){
         let id = this.idcounter++
@@ -87,7 +70,6 @@ export class EventQueue{
                     listener.cb(currentEvent.data)
                 }
             }else{
-                console.log(first(brokenrules).error)
                 this.onRuleBroken.trigger({event:currentEvent,error:first(brokenrules).error})
             }
         }

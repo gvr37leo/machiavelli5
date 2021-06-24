@@ -3,7 +3,7 @@ import {Entity} from './store.js'
 export class Action{
     
     constructor(type){
-
+        this.type = type
     }
 }
 
@@ -60,21 +60,21 @@ export class DiscoverOption{
 }
 
 export class Player extends Entity{
-    id
+    id = 0
     hand = []
     buildings = []
-    money
-    score
-    buildactions
-    specialUsed
-    isDiscovering
+    money = 0
+    score = 0
+    buildactions = 0
+    specialUsed = 0
+    isDiscovering = 0
     discoverOptions = []
-    discoverid
-    discovermin
-    discovermax
+    discoverid = 0
+    discovermin = 0
+    discovermax = 0
     
-    clientid
-    socketid
+    clientid = 0
+    socketid = 0
     disconnected = false
     dctimestamp = 0
 

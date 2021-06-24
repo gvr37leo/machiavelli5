@@ -53,10 +53,10 @@ export class Entity{
 
 export class EntityStore{
     map = new Map()
-    counter = 0
+    counter = 1
     upserts = new Set()
     deletions = new Set()
-    versionnumber = 0
+    versionnumber = 1
 
     get(id){
         return this.map.get(id)
@@ -131,7 +131,9 @@ export class EntityStore{
     }
 
     descendants(ent){
-        return this.children(ent).flatMap(ent => this.descendants(ent))
+        var children = this.children(ent)
+        var grandchildren = children.flatMap(ent => this.descendants(ent))
+        return children.concat(grandchildren)
     }
 
     duplicate(ent,amount){
@@ -162,7 +164,7 @@ export class EntityStore{
         return {
             upserts,
             deletions:[],
-            version:this.versionnumber,
+            versionnumber:this.versionnumber,
             type:'fullupdate',
         }
     }
@@ -194,19 +196,20 @@ export class EntityStore{
         return {
             upserts,
             deletions,
-            version:this.versionnumber,
+            versionnumber:this.versionnumber,
             type:'deltaupdate'
         }
     }
 
     applyChanges({deletions,upserts,type,versionnumber}){
+        this.versionnumber = versionnumber
+
         if(type == 'fullupdate'){
-            var store = new EntityStore()
+            this.map.clear()
             for(var entity of upserts){
                 entity.__proto__ = Entity.prototype
-                store.inject(entity)
+                this.inject(entity)
             }
-            store.versionnumber = versionnumber
             return store
         }else{
             for(let upsert of upserts){
