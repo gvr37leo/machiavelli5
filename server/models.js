@@ -40,6 +40,7 @@ export class Role extends Entity{
     image
     specialUsed = false
     incomephaseTaken = false
+    revealed = false
 
     constructor(init){
         super()
@@ -88,14 +89,15 @@ export class Player extends Entity{
 }
 
 export class Card extends Entity{
-    id
-    points
-    isAction
-    isAnyRole
+    id = -1
+    points = 0
+    isAction = false
+    isAnyRole = false
 
-    role
-    cost
-    image
+    role = -1
+    cost = 0
+    image = ''
+    tapped = false
 
     constructor(init){
         super()

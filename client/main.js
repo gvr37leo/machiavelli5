@@ -19,7 +19,7 @@ socket.on('fullupdate',(update) => {
 })
 
 socket.on('error', (error) => {
-    toastr.error(error.data)
+    toastr.error(error.message)
 })
 
 socket.socket.onAny((event,data) => {

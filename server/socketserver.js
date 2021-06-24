@@ -49,7 +49,8 @@ export class SocketServer{
             if(serverclient == null){
                 connectioneventtype = 'clientconnected'
                 serverclient = new ServerClient()
-                this.clients.add(serverclient)
+                serverclient.id = Math.floor(Math.random() * 9999999)
+                this.clients.insert(serverclient)
                 serverclient.broadcastdown.onany((data,type) => {
                     this.sockets.list().filter(s => s.clientid == serverclient.id).forEach(s => s.emit(type,data))
                 })

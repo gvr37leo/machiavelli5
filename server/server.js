@@ -10,6 +10,17 @@ import {Action,Card,DiscoverOption,Game,Player,Role} from './models.js'
 //issynced should be done per socket/tab
 //store should not be sent to client
 
+//todo 
+// fix combiscore
+// building abilitys
+// discovermultiple ui
+// game won screen
+// enter name screen
+// auto rolechoose
+// flex positioning
+// player highlights
+// discover description
+
 const app = express();
 const http = new Server(app);
 const io = new IOServer(http);
@@ -26,9 +37,10 @@ machiavellicontroller.input.onProcessFinished.listen(() => {
     updateClients()
 })
 
-machiavellicontroller.output.onany((data,type) => {
-    for(let socket of socketserver.sockets.list()){
-        socket.emit(type,data)
+machiavellicontroller.output.on('error',(data) => {
+    
+    for(let socket of socketserver.sockets.list().filter(s => s.clientid == data.clientid)){
+        socket.emit('error',data)
     }
 })
 

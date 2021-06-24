@@ -28,7 +28,7 @@ export class EventQueue{
         let listenerid = this.listen('completediscovery',(discovery) => {
             if(discovery.id == createdid){
                 this.unlisten(listenerid)
-                cb(discovery.data)
+                cb(discovery.index,discovery.option)
             }
         })
         return createdid

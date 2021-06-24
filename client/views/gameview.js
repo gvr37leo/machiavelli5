@@ -52,6 +52,11 @@ function GameView({client,store}){
                                 <div>{game.murderedRoleid == role.id ? 'murdered' : ''}</div>
                                 <div>{game.burgledRoleid == role.id ? 'robbed' : ''}</div>
                                 <div>{activerole.id == role.id ? 'activerole' : ''}</div>
+                                {(() => {
+                                    if(playerwithrole != null){
+                                        return <div>{role.revealed ? playerwithrole.name : ''}</div>
+                                    }
+                                })()}
                             </Cardview>
                         })}
                     </div>
@@ -96,7 +101,7 @@ function GameView({client,store}){
         <ModalView display={clientplayer.isDiscovering ? 'block' : 'none'} >
             {clientplayer.discoverOptions.map((option,i) => {
                 return <Cardview key={i} imagesrc={"/resources/" + option.image} onClick={() => {
-                    client.emit('completediscovery',{id:clientplayer.discoverid,data:i})
+                    client.emit('completediscovery',{id:clientplayer.discoverid,index:i,option:option})
                 }}>
                     <div>{option.description}</div>
                 </Cardview>
