@@ -11,15 +11,11 @@ import {Action,Card,DiscoverOption,Game,Player,Role} from './models.js'
 //store should not be sent to client
 
 //todo 
-// fix combiscore
 // building abilitys
 // discovermultiple ui
-// game won screen
-// enter name screen
 // auto rolechoose
-// flex positioning
-// player highlights
 // discover description
+// focus player shown cards
 
 const app = express();
 const http = new Server(app);
@@ -38,13 +34,15 @@ machiavellicontroller.input.onProcessFinished.listen(() => {
 })
 
 machiavellicontroller.output.on('error',(data) => {
-    
-    for(let socket of socketserver.sockets.list().filter(s => s.clientid == data.clientid)){
-        socket.emit('error',data)
-    }
+    let playerclient = socketserver.clients.get(data.clientid)
+    playerclient.emit('error',data)
 })
 
 
+machiavellicontroller.output.on('playerturnstart',(data) => {
+    let playerclient = socketserver.clients.get(data.player.clientid)
+    playerclient.emit('info',{message:"it's your turn"})
+})
 
 function updateClients(){
     let changes = machiavellicontroller.store.collectChanges()
@@ -107,7 +105,9 @@ socketserver.specials.on('clientreconnected',({client}) => {
     updateClients()
 })
 socketserver.specials.on('clientremoved',({client}) => {
-    machiavellicontroller.store.remove(machiavellicontroller.store.getClientPlayer(client.id).id)
+    let clientplayer = machiavellicontroller.store.getClientPlayer(client.id)
+    clientplayer.removeChildren()
+    machiavellicontroller.store.remove(clientplayer.id)
     console.log('client removed', client.id)
     updateClients()
 })

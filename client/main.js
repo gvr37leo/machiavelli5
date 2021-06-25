@@ -22,6 +22,10 @@ socket.on('error', (error) => {
     toastr.error(error.message)
 })
 
+socket.on('info', (info) => {
+    toastr.info(info.message)
+})
+
 socket.socket.onAny((event,data) => {
     console.log(event,data)
 })

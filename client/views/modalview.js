@@ -20,6 +20,7 @@ function ModalView({children,display}){
             width: '80%',
             display:'flex',
             flexDirection:'row',
+            flexWrap:'wrap'
         }}>
             {children}
 

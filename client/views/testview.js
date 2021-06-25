@@ -8,7 +8,7 @@ function TestView(){
     })
 
     return <div>
-        <pre>{JSON.stringify(storedata,null,'\t')}</pre>
+        <pre style={{color:'white'}}>{JSON.stringify(storedata,null,'\t')}</pre>
     </div>
 }
 

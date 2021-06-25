@@ -97,7 +97,8 @@ export class Card extends Entity{
     role = -1
     cost = 0
     image = ''
-    tapped = false
+    // hasActiveAbility = false
+    // tapped = false
 
     constructor(init){
         super()

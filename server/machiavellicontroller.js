@@ -195,10 +195,12 @@ export class GameManager{
                 role.specialUsed = false
                 role.player = null
                 role.revealed = false
+                role.flag()
             }
 
             for(let player of this.store.getPlayers()){
                 player.specialUsed = false
+                player.flag()
             }
 
             game.closeddiscardedroles = []
@@ -207,6 +209,8 @@ export class GameManager{
             game.rolestopick = shuffle(this.store.getRoles(),this.rng) 
             game.actionindex = 0
             game.pickingplayerindex = 0//oldest player
+            game.roleturnindex = 0
+            game.flag()
             this.input.add('rolepickaction',null)
         })
 
@@ -269,6 +273,7 @@ export class GameManager{
                 this.incrementRoleTurn()
             }else{
                 let player = this.store.get(role.player)
+                this.output.emit('playerturnstart',{player})
                 role.revealed = true
                 role.flag()
                 if(game.burgledRoleid == role.id){
@@ -436,12 +441,16 @@ export class GameManager{
         this.input.listen('debugfinishgame',() => {
             this.endGameRoutine()
         })
+
+        this.input.listen('autorolechoose',() => {
+            
+        })
     }
 
     addTurnCheck(action){
         this.input.addRule(action,'not your turn',(e) => {
             let clientplayer = this.store.getClientPlayer(e.clientid)
-            return clientplayer.id == this.store.getCurrentPlayer().id
+            return clientplayer.id == this.store.getCurrentPlayer()?.id ?? -1
         })
     }
 
@@ -518,8 +527,17 @@ export class GameManager{
                 }
             }
 
-            let uniquecount = new Set(buildings.map(b => b.role)).size
-            let combiscore = uniquecount >= 5 ? 3 : 0
+            var seen = new Set()
+            for(var building of buildings){
+                if(building.role > 0){
+                    seen.add(building.role)
+                }
+                if(building.isAnyRole){
+                    seen.add('any')
+                }
+            }
+            let uniquecount = seen.size
+            let combiscore = uniquecount >= 4 ? 3 : 0
             player.score = buildingscore + finishscore + combiscore
             player.flag()
         }
