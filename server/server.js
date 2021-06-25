@@ -29,7 +29,7 @@ machiavellicontroller.input.addAndTrigger('init')
 machiavellicontroller.input.onProcessFinished.listen(() => {
     updateClients()
 })
-
+ 
 machiavellicontroller.output.on('error',(data) => {
     let playerclient = socketserver.clients.get(data.clientid)
     playerclient.emit('error',data)
