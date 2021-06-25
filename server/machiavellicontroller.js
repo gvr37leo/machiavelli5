@@ -226,7 +226,7 @@ export class GameManager{
                 this.nextPickAction()
             }else if(action.type == 'pick'){
                 let pickingplayer = players[game.pickingplayerindex % players.length]
-                this.discoverRole(pickingplayer,game.rolestopick,(i) => {
+                this.discoverRole('pick a character',pickingplayer,game.rolestopick,(i) => {
                     let role = game.rolestopick.remove(i)
                     role.player = pickingplayer.id
                     role.flag()
@@ -247,7 +247,7 @@ export class GameManager{
                 game.opendiscardedroles.push(role)
             }else if(action.type == 'discardClosed'){
                 let pickingplayer = players[game.pickingplayerindex % players.length]
-                this.discoverRole(pickingplayer,game.rolestopick,(i) => {
+                this.discoverRole('discard a character', pickingplayer,game.rolestopick,(i) => {
                     
                     game.closeddiscardedroles.push(game.rolestopick.remove(i))
                     this.nextPickAction()
@@ -255,7 +255,7 @@ export class GameManager{
             }else if(action.type == 'pickWithKingCard'){
                 let pickingplayer = players[game.pickingplayerindex % players.length]
                 let rolestopick = [...game.rolestopick, ...game.closeddiscardedroles]
-                this.discoverRole(pickingplayer,rolestopick,(i) => {
+                this.discoverRole('pick a character', pickingplayer,rolestopick,(i) => {
                     let role = rolestopick.remove(i)
                     role.player = pickingplayer.id
                     this.nextPickAction()
@@ -321,7 +321,7 @@ export class GameManager{
             activerole.incomephaseTaken = true
             activerole.flag()
             var top2 = this.store.getDeckFolder()._children().slice(0,2)
-            this.discoverCard(clientplayer,top2,(i) => {
+            this.discoverCard('choose a card',clientplayer,top2,(i) => {
                 top2.splice(i,1)[0].setParent(clientplayer.childByName('hand'))
                 top2[0].setParent(this.store.getDiscardFolder())
             })
@@ -343,34 +343,34 @@ export class GameManager{
 
             if(role.name == 'moordenaar'){
                 let roles = this.store.getRoles().slice(1)
-                this.discoverRole(player,roles,(i) => {
+                this.discoverRole('choose someone to kill', player,roles,(i) => {
                     game.murderedRoleid = roles[i].id
                     game.flag()
                 })
             }else if(role.name == 'dief'){
                 let roles = this.store.getRoles().slice(2)
                 //todo filter away own roles
-                this.discoverRole(player,roles,(i) => {
+                this.discoverRole('choose someone to rob', player,roles,(i) => {
                     game.burgledRoleid = roles[i].id
                     game.flag()
                 })
             }else if(role.name == 'magier'){
-                this.discover(player,[
-                    new DiscoverOption({description:'swapplayer',image:'tempel.png',value:'swapplayer'}),
-                    new DiscoverOption({description:'swapdeck',image:'tempel.png',value:'swapdeck'})
+                this.discover('either swap your hand with a player or with the deck', player,[
+                    new DiscoverOption({description:'swap with player',image:'tempel.png',value:'swapplayer'}),
+                    new DiscoverOption({description:'swap with deck',image:'tempel.png',value:'swapdeck'})
                 ],(i,option) => {
                     if(option.value == 'swapplayer'){
                         let otherplayers = this.store.getPlayers().filter(p => p.id != player.id)
-                        this.discoverPlayer(player,otherplayers,(i) => {
+                        this.discoverPlayer('who to swap with?', player,otherplayers,(i) => {
                             player.childByName('hand').setParent(otherplayers[i])
                             otherplayers[i].childByName('hand').setParent(player)
                         })
                     }else if(option.value == 'swapdeck'){
                         let discardfolder = this.store.getDiscardFolder()
                         let handcards = player.childByName('hand')._children()
-                        this.discoverMultipleCards(player,handcards,0,handcards.length,(chosenindices) => {
-                            chosenindices.map(index => handcards[index]).forEach(c => c.setParent(discardfolder))
-                            this.drawCards(player,chosenindices.length)
+                        this.discoverMultipleCards('choose cards to replace', player,handcards,0,handcards.length,(indices, options) => {
+                            indices.map(index => handcards[index]).forEach(c => c.setParent(discardfolder))
+                            this.drawCards(player,indices.length)
                         })
                         
                     }
@@ -397,14 +397,19 @@ export class GameManager{
                 activeplayersids.delete(player.id)
                 activeplayersids.delete(game.childByName('rolesfolder').childByName('prediker').player)
                 let remainingplayers = Array.from(activeplayersids).map(playerid => this.store.get(playerid))
-                this.discoverPlayer(player,remainingplayers,(i) => {
+                this.discoverPlayer('choose who to attack', player,remainingplayers,(i) => {
                     let board = remainingplayers[i].childByName('board')._children()
-                    this.discoverCard(player,board,(i) => {
+                    this.discoverCard('choose a building to destroy',player,board,(i) => {
                         let building = board[i]
-                        player.money -= building.cost - 1
-
-                        player.flag()
-                        building.setParent(game.childByName('discardpile'))
+                        if(building.cost - 1 > player.money){
+                            role.specialUsed = false
+                            role.flag()
+                            this.output.emit('error',{clientid:player.clientid,message:'building is too expensive'})
+                        }else{
+                            player.money -= building.cost - 1
+                            player.flag()
+                            building.setParent(game.childByName('discardpile'))
+                        }
                     })
                 })
             }
@@ -443,7 +448,26 @@ export class GameManager{
         })
 
         this.input.listen('autorolechoose',() => {
+            let game = this.store.getGame()
+            let players = this.store.getPlayers()
+
+            let pickfirstoption = () => {
+                let pickingplayer = players[game.pickingplayerindex % players.length]
+                if(pickingplayer.isDiscovering){
+                    this.input.add('completediscovery',{id:pickingplayer.discoverid,indices:[0],options:pickingplayer.discoverOptions[0]})
+                }
+            }
             
+            let rolepickhandle = this.input.listen('rolepickaction',() => {
+                pickfirstoption()
+            })
+
+            let roleturnhandle = this.input.listen('roleturn', () => {
+                this.input.unlisten(rolepickhandle)
+                this.input.unlisten(roleturnhandle)
+            })
+
+            pickfirstoption()
         })
     }
 
@@ -556,27 +580,29 @@ export class GameManager{
         player.flag()
     }
 
-    discoverRole(player,options,cb){
-        this.discover(player,options.map(r => new DiscoverOption({description:r.name,image:r.image})),cb)
+    discoverRole(description, player,options,cb){
+        this.discover(description, player,options.map(r => new DiscoverOption({description:'',image:r.image})),cb)
     }
 
-    discoverPlayer(player,options,cb){
-        this.discover(player,options.map(p => new DiscoverOption({description:p.name,image:''})),cb)
+    discoverPlayer(description, player,options,cb){
+        this.discover(description, player,options.map(p => new DiscoverOption({description:p.name,image:''})),cb)
     }
 
-    discoverCard(player,options,cb){
-        this.discover(player,options.map(c => new DiscoverOption({description:c.name,image:c.image})),cb)
+    discoverCard(description, player,options,cb){
+        this.discover(description, player,options.map(c => new DiscoverOption({description:'',image:c.image})),cb)
     }
 
-    discoverMultipleCards(player,options,min,max,cb){
-        this.discoverMultiple(player,options.map(c => new DiscoverOption({description:c.name,image:c.image})),min,max,cb)
+    discoverMultipleCards(description, player,options,min,max,cb){
+        this.discoverMultiple(description, player,options.map(c => new DiscoverOption({description:'',image:c.image})),min,max,cb)
     }
     
-    discover(player,options,cb){
-        this.discoverMultiple(player,options,1,1,cb)
+    discover(description, player,options,cb){
+        this.discoverMultiple(description, player,options,1,1,(indices,options) => {
+            cb(indices[0],options[0])
+        })
     }
 
-    discoverMultiple(player,options,min,max,cb){
+    discoverMultiple(description,player,options,min,max,cb){
         if(options.length == 0){
             return
         }
@@ -584,14 +610,16 @@ export class GameManager{
         player.discoverOptions = options
         player.discovermin = min
         player.discovermax = max
-        player.discoverid = this.input.startDiscovery((index,option) => {
+        player.discoverDescription = description
+        player.discoverid = this.input.startDiscovery((indices,options) => {
             player.isDiscovering = false
             player.discoverOptions = []
             player.discovermin = 0
             player.discovermax = 0
             player.discoverid = 0
+            player.discoverDescription = ''
             this.store.flag(player.id)
-            cb(index,option)
+            cb(indices,options)
         })
         this.store.flag(player.id)
     }

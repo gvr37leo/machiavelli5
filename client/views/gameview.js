@@ -1,4 +1,5 @@
-let focusedplayerid = 0
+
+let focusedplayerid = -1
 
 function GameView({client,store}){
 
@@ -15,6 +16,11 @@ function GameView({client,store}){
     let clientplayerIsActive = false
     if(currentPlayer != null){
         clientplayerIsActive = currentPlayer.id == clientplayer.id
+    }
+    let focusedplayer = store.get(focusedplayerid)
+    let focusedboard = playerboard
+    if(focusedplayer != null){
+        focusedboard = focusedplayer.childByName('board')._children()
     }
     // client.emit('playerjoin',{name:'asd'})
     // client.emit('gamestart',{})
@@ -38,6 +44,7 @@ function GameView({client,store}){
                 {players.map((player) => {
                     return <PlayerView key={player.id} client={client} store={store} player={player} onClick={() => {
                         focusedplayerid = player.id
+                        updateHTML()
                         
                         
                     }}></PlayerView>
@@ -85,10 +92,11 @@ function GameView({client,store}){
                 </div>
 
                 <div style={{display:'flex',flexWrap:'wrap', padding:'10px', margin:'0 0 10px 0', borderRadius:'3px', border:'1px solid white'}}>
-                    {/* show focused player here instead */}
-                    {playerboard.map(card => {
-                        return <Cardview key={card.id} imagesrc={"/resources/" + card.image} onClick={() =>{
-                            console.log('click')
+                    {focusedboard.map(card => {
+                        return <Cardview key={card.id} imagesrc={"/resources/" + card.image} style={{cursor:card.hasActiveAbility ? 'pointer' : ''}} onClick={() =>{
+                            if(card.hasActiveAbility){
+                                client.emit('cardability',{cardid:card.id})
+                            }
                         }} ></Cardview>
                     })}
                 </div>
@@ -103,13 +111,41 @@ function GameView({client,store}){
             </div>
         </div>
         <ModalView display={clientplayer.isDiscovering ? 'block' : 'none'} >
-            {clientplayer.discoverOptions.map((option,i) => {
-                return <Cardview key={i} imagesrc={"/resources/" + option.image} style={{cursor:'pointer'}} onClick={() => {
-                    client.emit('completediscovery',{id:clientplayer.discoverid,index:i,option:option})
-                }}>
-                    <div>{option.description}</div>
-                </Cardview>
-            })}
+            <div style={{display:'flex', flexDirection:'column', alignItems:'center', color:'black'}}>
+                <div style={{padding:'10px'}}>{clientplayer.discoverDescription}</div>
+                <div style={{display:'flex',flexWrap:'wrap'}}>
+                    {clientplayer.discoverOptions.map((option,i) => {
+                        return <Cardview key={i} imagesrc={"/resources/" + option.image} style={{cursor:'pointer', border:`1px solid ${option.selected ? 'green' : 'black'}`}} onClick={() => {
+                            if(clientplayer.discovermin == 1 && clientplayer.discovermax == 1){
+                                client.emit('completediscovery',{id:clientplayer.discoverid,indices:[i],options:[option]})
+                            }else{
+                                option.selected = !option.selected
+                                updateHTML()
+                            }
+                        }}>
+                            <div style={{display:'flex', justifyContent:'center'}}>
+                                <div>{option.description}</div>
+                            </div>
+                        </Cardview>
+                    })}
+                </div>
+                {(() => {
+                    if((clientplayer.discovermin == 1 && clientplayer.discovermax == 1) == false){
+                        var chosenoptionscount = clientplayer.discoverOptions.filter((option) => option.selected).length 
+                        return <button disabled={chosenoptionscount < clientplayer.discovermin || chosenoptionscount > clientplayer.discovermax} onClick={() => {
+                            var options = clientplayer.discoverOptions.filter((option,i) => {
+                                option.index = i
+                                return option.selected
+                            })
+                            var indices = options.map(option => option.index)
+                            
+                            client.emit('completediscovery',{id:clientplayer.discoverid,indices:indices,options:options})
+                        }}>confirm</button>
+                    }
+                })()}
+            </div>
+            
+            
         </ModalView>
     </React.Fragment>
 }

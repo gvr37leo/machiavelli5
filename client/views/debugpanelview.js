@@ -1,5 +1,5 @@
 function DebugPanelView(){
-    return <div style={{position:"absolute", border:"1px solid black", borderRadius:"3px", color:"black", top:"10px", right:"10px", padding:"20px", background:"white"}}>
+    return <div style={{position:"absolute", border:"1px solid black", borderRadius:"3px", color:"black", top:"10px", right:"10px", padding:"20px", background:"white", zIndex:2}}>
         <div>debug panel</div>
         <div style={{marginBottom:"10px"}}>
             <button onClick={() => {
@@ -30,6 +30,11 @@ function DebugPanelView(){
                         <button onClick={() => {
                             socket.emit('requestfullupdate',{})
                         }}>request full update</button>
+                    </div>
+                    <div style={{marginBottom:"10px"}}>
+                        <button onClick={() => {
+                            socket.emit('autorolechoose',{})
+                        }}>auto role choose</button>
                     </div>
                     <div>clientid:{socket.clientid}</div>
                     <div>socketid:{socket.socketid}</div>

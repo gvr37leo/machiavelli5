@@ -54,6 +54,7 @@ export class DiscoverOption{
     image
     description
     value
+    selected = false
 
     constructor(init){
         Object.assign(this,init)
@@ -97,8 +98,8 @@ export class Card extends Entity{
     role = -1
     cost = 0
     image = ''
-    // hasActiveAbility = false
-    // tapped = false
+    hasActiveAbility = false
+    tapped = false
 
     constructor(init){
         super()

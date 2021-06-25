@@ -12,10 +12,7 @@ import {Action,Card,DiscoverOption,Game,Player,Role} from './models.js'
 
 //todo 
 // building abilitys
-// discovermultiple ui
-// auto rolechoose
-// discover description
-// focus player shown cards
+// heroku/git
 
 const app = express();
 const http = new Server(app);

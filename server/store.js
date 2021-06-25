@@ -89,7 +89,9 @@ export class EntityStore{
     remove(id){
         let ent = this.map.get(id)
         let parent = this.map.get(ent.parent)
-        remove(parent.children, ent.id)
+        if(parent != null){
+            remove(parent.children, ent.id)
+        }
         this.map.delete(id)
         this.deletions.add(id)
         // parent.onEvent.addAndTrigger('remove',id)
@@ -145,6 +147,17 @@ export class EntityStore{
             res.push(obj)
         }
         return res
+    }
+
+    garbageCollect(root){
+        var seen = new Set()
+        seen.add(root.id)
+        root.descendants().forEach(e => seen.add(e.id))
+        for(var entity of this.list()){
+            if(seen.has(entity.id) == false){
+                this.remove(entity.id)
+            }
+        }
     }
 
 
