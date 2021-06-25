@@ -7,8 +7,5 @@
   },
   "scripts": {
     "start": "node --inspect server/server.js"
-  },
-  "devDependencies": {
-    "@babel/preset-env": "^7.14.7"
   }
 }
