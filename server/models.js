@@ -100,6 +100,7 @@ export class Card extends Entity{
     image = ''
     hasActiveAbility = false
     tapped = false
+    undestroyable = false
 
     constructor(init){
         super()

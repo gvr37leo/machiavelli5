@@ -58,6 +58,8 @@ export class GameManager{
             let game = this.store.getGame()
             let deckfolder = this.store.getDeckFolder()
             deckfolder.removeChildren()
+            let discardfolder = this.store.getDiscardFolder()
+            discardfolder.removeChildren()
             
             let rolesfolder = game.childByName('rolesfolder')
             let koning = rolesfolder.childByName('koning')
@@ -82,17 +84,17 @@ export class GameManager{
             this.store.add(new Card({cost:2,points:2 ,name:'kerker',     role:condotierre.id,         image:'kerker.png'}),deckfolder).duplicate(2)
             this.store.add(new Card({cost:3,points:3 ,name:'toernooiveld',       role:condotierre.id,         image:'toernooiveld.png'}),deckfolder).duplicate(2)
             this.store.add(new Card({cost:5,points:5 ,name:'vesting',        role:condotierre.id,         image:'vesting.png'}),deckfolder).duplicate(1)
-            this.store.add(new Card({cost:2,points:2 ,name:'hof_der_wonderen',       role:null,         image:'hofderwonderen.png'}),deckfolder).duplicate(0)
-            this.store.add(new Card({cost:3,points:3 ,name:'verdedigingstoren',      role:null,         image:'verdedigingstoren.png'}),deckfolder).duplicate(1)
-            this.store.add(new Card({cost:5,points:5 ,name:'laboratorium',       role:null,         image:'laboratorium.png'}),deckfolder).duplicate(0)
-            this.store.add(new Card({cost:5,points:5 ,name:'smederij',       role:null,         image:'smederij.png'}),deckfolder).duplicate(0)
+
+            this.store.add(new Card({cost:2,points:2 ,name:'hof_der_wonderen',       role:null,         image:'hofderwonderen.png',isAnyRole:true}),deckfolder).duplicate(0)
+            this.store.add(new Card({cost:3,points:3 ,name:'verdedigingstoren',      role:null,         image:'verdedigingstoren.png', undestroyable:true}),deckfolder).duplicate(1)
+            this.store.add(new Card({cost:5,points:5 ,name:'laboratorium',       role:null,         image:'laboratorium.png',hasActiveAbility:true}),deckfolder).duplicate(0)
+            this.store.add(new Card({cost:5,points:5 ,name:'smederij',       role:null,         image:'smederij.png',hasActiveAbility:true}),deckfolder).duplicate(0)
             this.store.add(new Card({cost:5,points:5 ,name:'observatorium',      role:null,         image:'observatorium.png'}),deckfolder).duplicate(0)
             this.store.add(new Card({cost:5,points:5 ,name:'kerkhof',        role:null,         image:'kerkhof.png'}),deckfolder).duplicate(0)
             this.store.add(new Card({cost:6,points:6 ,name:'bibliotheek',        role:null,         image:'bibliotheek.png'}),deckfolder).duplicate(0)
             this.store.add(new Card({cost:6,points:6 ,name:'school_voor_magiers',        role:null,         image:'schoolvoormagiers.png'}),deckfolder).duplicate(0)
             this.store.add(new Card({cost:6,points:8 ,name:'drakenburcht',       role:null,         image:'drakenburcht.png'}),deckfolder).duplicate(0)
-            this.store.add(new Card({cost:6,points:6 ,name:'universiteit',       role:null,         image:'universiteit.png'}),deckfolder).duplicate(0)
-
+            this.store.add(new Card({cost:6,points:8 ,name:'universiteit',       role:null,         image:'universiteit.png'}),deckfolder).duplicate(0)
             shuffle(deckfolder.children,this.rng)
             let roles = this.store.getRoles()
             for(let role of roles){
@@ -112,6 +114,7 @@ export class GameManager{
             game.murderedRoleid = null
             game.status = 'started'
             game.roleturnindex = roles.first().id
+            game.pickingplayerindex = 0
             game.flag()
             this.input.add('roundstart',{})
         })
@@ -208,7 +211,7 @@ export class GameManager{
             game.kingshownRole = 0
             game.rolestopick = shuffle(this.store.getRoles(),this.rng) 
             game.actionindex = 0
-            game.pickingplayerindex = 0//oldest player
+            game.pickingplayerindex = players.findIndex(p => p.id == game.crownwearerid)
             game.roleturnindex = 0
             game.flag()
             this.input.add('rolepickaction',null)
@@ -272,7 +275,15 @@ export class GameManager{
             if(role.player == null || game.murderedRoleid == role.id){
                 this.incrementRoleTurn()
             }else{
+                
                 let player = this.store.get(role.player)
+                let playercards = player.childByName('board')._children()
+                for(var card of playercards){
+                    if(card.tapped == true){
+                        card.tapped = false
+                        card.flag()
+                    }
+                }
                 this.output.emit('playerturnstart',{player})
                 role.revealed = true
                 role.flag()
@@ -316,14 +327,30 @@ export class GameManager{
 
         this.addTurnCheck('drawcards')
         this.input.listen('drawcards',(data) => {
+            let showcount = 2
+            let pickcount = 1
             let clientplayer = this.store.getClientPlayer(data.clientid)
+            let boardcards = clientplayer.childByName('board')._children()
+            if(boardcards.find(c => c.name == 'observatorium') != null){
+                showcount = 3
+            }
+            if(boardcards.find(c => c.name == 'bibliotheek') != null){
+                pickcount = 2
+            }
+
             var activerole = this.store.getActiveRole()
             activerole.incomephaseTaken = true
             activerole.flag()
-            var top2 = this.store.getDeckFolder()._children().slice(0,2)
-            this.discoverCard('choose a card',clientplayer,top2,(i) => {
-                top2.splice(i,1)[0].setParent(clientplayer.childByName('hand'))
-                top2[0].setParent(this.store.getDiscardFolder())
+            var showcards = this.store.getDeckFolder()._children().slice(0,showcount)
+            let discardfolder = this.store.getDiscardFolder()
+            let clienthand = clientplayer.childByName('hand')
+            this.discoverMultipleCards('choose a card',clientplayer,showcards,pickcount,pickcount,(indices,options) => {
+                for(var card of showcards){
+                    card.setParent(discardfolder)
+                }
+                for(var index of indices){
+                    showcards[index].setParent(clienthand)
+                }
             })
         })
 
@@ -398,7 +425,7 @@ export class GameManager{
                 activeplayersids.delete(game.childByName('rolesfolder').childByName('prediker').player)
                 let remainingplayers = Array.from(activeplayersids).map(playerid => this.store.get(playerid))
                 this.discoverPlayer('choose who to attack', player,remainingplayers,(i) => {
-                    let board = remainingplayers[i].childByName('board')._children()
+                    let board = remainingplayers[i].childByName('board')._children().filter(c => c.undestroyable == false)
                     this.discoverCard('choose a building to destroy',player,board,(i) => {
                         let building = board[i]
                         if(building.cost - 1 > player.money){
@@ -409,6 +436,7 @@ export class GameManager{
                             player.money -= building.cost - 1
                             player.flag()
                             building.setParent(game.childByName('discardpile'))
+                            this.input.add('buildingdestroyed',{building:building})
                         }
                     })
                 })
@@ -441,6 +469,54 @@ export class GameManager{
         this.addTurnCheck('pass')
         this.input.listen('pass',() => {
             this.incrementRoleTurn()
+        })
+
+        this.input.listen('buildingdestroyed',({building}) => {
+            let kerkhof = this.store.list().find(ent => ent.name == 'kerkhof')
+            let player = this.store.ancestor(kerkhof,'player')
+            
+            if(player != null && player.money > 0){
+                this.discover('do you want to buy the destroyed card for 1 gold?',player,[
+                    new DiscoverOption({image:building.image,description:'yes'}),
+                    new DiscoverOption({image:building.image,description:'no'}),
+                ],(i,option) => {
+                    if(option.description == 'yes'){
+                        player.money -= 1
+                        player.flag()
+                        building.setParent(player.childByName('hand'))
+                    }
+                })
+            }
+        })
+
+        this.addTurnCheck('cardability')
+        this.input.addRule('cardability','card already used',(({cardid}) => {
+            let card = this.store.get(cardid)
+            return card.tapped == false
+        }))
+        this.input.listen('cardability',({cardid}) => {
+            let card = this.store.get(cardid)
+            let player = this.store.ancestor(card,'player')
+            if(card.name == 'laboratorium'){
+                let playerhand = player.childByName('hand')._children()
+                this.discoverCard('choose card to convert',player,playerhand,(i,option) => {
+                    player.money++;
+                    player.flag()
+                    let discardedcard = playerhand[i]
+                    discardedcard.setParent(this.store.getDiscardFolder())
+                })
+                card.tapped = true
+                card.flag()
+            }else if(card.name == 'smederij'){
+                if(player.money >= 3){
+                    this.drawCards(player,2)
+                    player.money -= 3
+                    card.tapped = true
+                    card.flag()
+                }else{
+                    this.output.emit('error',{clientid:player.clientid,message:'not enough gold'})
+                }
+            }
         })
 
         this.input.listen('debugfinishgame',() => {
@@ -576,7 +652,7 @@ export class GameManager{
 
     processTaxes(role){
         let player = this.store.get(role.player)
-        player.money += player.childByName('board')._children().filter((c) => c.role == role.id).length
+        player.money += player.childByName('board')._children().filter((c) => c.role == role.id || c.name == 'school_voor_magiers').length
         player.flag()
     }
 
@@ -585,7 +661,7 @@ export class GameManager{
     }
 
     discoverPlayer(description, player,options,cb){
-        this.discover(description, player,options.map(p => new DiscoverOption({description:p.name,image:''})),cb)
+        this.discover(description, player,options.map(p => new DiscoverOption({description:p.name,image:'user.svg'})),cb)
     }
 
     discoverCard(description, player,options,cb){

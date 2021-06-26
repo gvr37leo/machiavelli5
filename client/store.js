@@ -119,7 +119,7 @@ class Entitystore{
             if(current.type == type){
                 return current
             }
-            current = this.parent(ent)
+            current = this.parent(current)
         }
         return null
     }

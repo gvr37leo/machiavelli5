@@ -1,4 +1,5 @@
 function PlayerView({client,store,player,onClick }){
+    var game = store.getGame()
     var currentPlayer = store.getCurrentPlayer()
     var boardcards = player.childByName('board')._children()
     var handcards = player.childByName('hand')._children()
@@ -15,9 +16,10 @@ function PlayerView({client,store,player,onClick }){
         <div>money:{player.money}</div>
         <div>buildings:{boardcards.length}</div>
         <div>handsize:{handcards.length}</div>
-        <div>isDiscovering:{player.isDiscovering.toString()}</div>
-        <div>discoverid:{player.discoverid}</div>
-        <div>discovermin:{player.discovermin}</div>
-        <div>discovermax:{player.discovermax}</div>
+        {(() => {
+            if(game.crownwearerid == player.id){
+                return <img style={{width:'50px', margin:'10px'}} src="/resources/crown-solid.svg"></img>
+            }
+        })()}
     </div>
 }

@@ -11,8 +11,8 @@ import {Action,Card,DiscoverOption,Game,Player,Role} from './models.js'
 //store should not be sent to client
 
 //todo 
-// building abilitys
-// heroku/git
+//crownwearer icon
+//player image icon
 
 const app = express();
 const http = new Server(app);
