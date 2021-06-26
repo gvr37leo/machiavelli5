@@ -41,7 +41,8 @@ export class Role extends Entity{
     specialUsed = false
     incomephaseTaken = false
     revealed = false
-
+    publiclydiscarded = false
+    
     constructor(init){
         super()
         Object.assign(this,init)

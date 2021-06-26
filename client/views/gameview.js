@@ -63,10 +63,13 @@ function GameView({client,store}){
                         return <Cardview key={role.id} style={{border:`1px solid ${bordercolor}`}} onClick={() => {
                             
                         }} client={client} store={store} title={""} text={""} imagesrc={"/resources/" + role.image}>
+                            <div>{role.player == clientplayer.id ? 'your role' : ''}</div>
+                            <div>{game.kingshownRole == role.id && clientplayer.id == game.crownwearerid ? 'discarded' : ''}</div>
+                            <div>{role.publiclydiscarded ? 'discarded' : ''}</div>
                             <div>{game.murderedRoleid == role.id ? 'murdered' : ''}</div>
                             <div>{game.burgledRoleid == role.id ? 'robbed' : ''}</div>
                             {(() => {
-                                if(playerwithrole != null){
+                                if(playerwithrole != null && role.player != clientplayer.id){
                                     return <div>{role.revealed ? playerwithrole.name : ''}</div>
                                 }
                             })()}

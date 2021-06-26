@@ -13,5 +13,10 @@ function GamewonView({client,store}){
                 return <div key={p.id}>{p.name}:{p.score}</div>
             })}
         </div>
+        <div style={{marginBottom:"10px"}}>
+            <button onClick={() => {
+                socket.emit('gamestart',{})
+            }}>start new game</button>
+        </div>
     </div>
 }
