@@ -414,7 +414,7 @@ export class GameManager{
                 this.processTaxes(role)
             }else if(role.name == 'bouwmeester'){
                 this.drawCards(player,2)
-                player.buildactions = 3
+                player.buildactions += 2
                 player.flag()
             }else if(role.name == 'condotierre'){
                 this.processTaxes(role)
