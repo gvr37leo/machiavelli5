@@ -152,7 +152,7 @@ export class GameManager{
                     new Action('pick'),new Action('pass'),
                     new Action('pick'),new Action('discardClosed'),new Action('pass'),
                     new Action('pick'),new Action('discardClosed'),new Action('pass'),
-                    new Action('pick'),new Action('discardClosed'),new Action('pass'),
+                    new Action('pick'),new Action('discardClosedAuto'),new Action('pass'),
                     new Action('start'),
                 ]
             }else if(players.length == 3){
@@ -256,6 +256,9 @@ export class GameManager{
                     game.closeddiscardedroles.push(game.rolestopick.remove(i))
                     this.nextPickAction()
                 })
+            }else if(action.type == 'discardClosedAuto'){
+                game.closeddiscardedroles.push(game.rolestopick.remove(0))
+                this.nextPickAction()
             }else if(action.type == 'pickWithKingCard'){
                 let pickingplayer = players[game.pickingplayerindex % players.length]
                 let rolestopick = [...game.rolestopick, ...game.closeddiscardedroles]
