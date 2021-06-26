@@ -91,6 +91,7 @@ class Entitystore{
         let parent = this.map.get(ent.parent)
         if(parent != null){
             remove(parent.children, ent.id)
+            parent.flag()
         }
         this.map.delete(id)
         this.deletions.add(id)

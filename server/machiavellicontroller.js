@@ -177,7 +177,7 @@ export class GameManager{
                 }
                 
                 game.actions = [
-                    ...new Array(charttable[players.length]).map(v => new Action('discardOpen')),
+                    ...new Array(charttable[players.length]).fill(0).map(v => new Action('discardOpen')),
                     new Action('kingDiscard'),
                 ]
 
@@ -248,6 +248,7 @@ export class GameManager{
                     game.rolestopick.push(king)
                     game.rolestopick = shuffle(game.rolestopick,this.rng) 
                 }
+                this.nextPickAction()
             }else if(action.type == 'discardClosed'){
                 let pickingplayer = players[game.pickingplayerindex % players.length]
                 this.discoverRole('discard a character', pickingplayer,game.rolestopick,(i) => {
