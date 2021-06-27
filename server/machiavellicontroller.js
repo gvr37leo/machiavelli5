@@ -489,7 +489,7 @@ export class GameManager{
             let kerkhof = this.store.list().find(ent => ent.name == 'kerkhof')
             let player = this.store.ancestor(kerkhof,'player')
             
-            if(player != null && player.money > 0){
+            if(player != null && kerkhof._parent().name == 'board' && player.money > 0){
                 this.discover('do you want to buy the destroyed card for 1 gold?',player,[
                     new DiscoverOption({image:building.image,description:'yes'}),
                     new DiscoverOption({image:building.image,description:'no'}),
