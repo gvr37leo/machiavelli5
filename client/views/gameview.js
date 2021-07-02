@@ -17,9 +17,10 @@ function GameView({client,store}){
     if(currentPlayer != null){
         clientplayerIsActive = currentPlayer.id == clientplayer.id
     }
-    let focusedplayer = store.get(focusedplayerid)
+    let focusedplayer = clientplayer
     let focusedboard = playerboard
-    if(focusedplayer != null){
+    if(focusedplayerid != -1){
+        focusedplayer = store.get(focusedplayerid)
         focusedboard = focusedplayer.childByName('board')._children()
     }
     // client.emit('playerjoin',{name:'asd'})
@@ -94,6 +95,7 @@ function GameView({client,store}){
                     }} className="button" disabled={clientplayerIsActive == false}>end turn</button>
                 </div>
 
+                <div>{`${focusedplayer.name}'s board`}</div>
                 <div style={{display:'flex',flexWrap:'wrap', padding:'10px', margin:'0 0 10px 0', borderRadius:'3px', border:'1px solid white'}}>
                     {focusedboard.map(card => {
                         return <Cardview key={card.id} imagesrc={"/resources/" + card.image} style={{cursor:card.hasActiveAbility ? 'pointer' : ''}} onClick={() =>{
